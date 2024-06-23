@@ -1,4 +1,4 @@
-﻿using BookLibrary.Data.Entities;
+using BookLibrary.Data.Entities;
 
 namespace BookLibrary.Data.Repositories;
 

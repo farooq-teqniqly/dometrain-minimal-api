@@ -1,3 +1,7 @@
+using BookLibrary.Data.Entities;
+using BookLibrary.Data.Extensions;
+using BookLibrary.Data.Repositories;
+
 namespace BookLibrary.Api;
 
 public class Program
@@ -6,11 +10,23 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Services.AddRepositories();
+
         AddSwaggerSupport(builder.Services);
 
         var app = builder.Build();
 
-        app.MapGet("/", () => "Hello World!");
+        app.MapPost("books", async (Book book, IBookRepository bookRepository) =>
+        {
+            var added = await bookRepository.AddBook(book);
+
+            if (!added)
+            {
+                return Results.BadRequest($"A book with ISBN '{book.Isbn}' already exists.");
+            }
+
+            return Results.Created($"/books/{book.Isbn}", book);
+        });
 
         UseSwagger(app, builder);
 
