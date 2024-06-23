@@ -33,7 +33,7 @@ public class Program
                     return Results.BadRequest(validationResult.Errors);
                 }
 
-                var added = await bookRepository.AddBook(book);
+                var added = await bookRepository.AddBookAsync(book);
 
                 if (!added)
                 {

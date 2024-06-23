@@ -4,7 +4,7 @@ namespace BookLibrary.Data.Repositories;
 
 public interface IBookRepository
 {
-    Task<bool> AddBook(Book book);
-    Task<bool> UpdateBook(Book book);
-    Task<bool> DeleteBook(string isbn);
+    Task<bool> AddBookAsync(Book book);
+    Task<bool> UpdateBookAsync(Book book);
+    Task<bool> DeleteBookAsync(string isbn);
 }

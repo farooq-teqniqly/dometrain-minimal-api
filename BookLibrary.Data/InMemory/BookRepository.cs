@@ -6,34 +6,34 @@ internal class BookRepository : IBookRepository, IReadOnlyBookRepository
 {
     private static readonly List<Book> _database = [];
 
-    public Task<bool> AddBook(Book book)
+    public Task<bool> AddBookAsync(Book book)
     {
         _database.Add(book);
 
         return Task.FromResult(true);
     }
 
-    public Task<bool> UpdateBook(Book book)
+    public Task<bool> UpdateBookAsync(Book book)
     {
         throw new NotImplementedException();
     }
 
-    public Task<bool> DeleteBook(string isbn)
+    public Task<bool> DeleteBookAsync(string isbn)
     {
         throw new NotImplementedException();
     }
 
-    public Task<Book?> GetByIsbn(string isbn)
+    public Task<Book?> GetByIsbnAsync(string isbn)
     {
         throw new NotImplementedException();
     }
 
-    public Task<IEnumerable<Book>> GetAll()
+    public Task<IEnumerable<Book>> GetAllAsync()
     {
         throw new NotImplementedException();
     }
 
-    public Task<IEnumerable<Book>> SearchByTitle(string searchTerm)
+    public Task<IEnumerable<Book>> SearchByTitleAsync(string searchTerm)
     {
         throw new NotImplementedException();
     }
