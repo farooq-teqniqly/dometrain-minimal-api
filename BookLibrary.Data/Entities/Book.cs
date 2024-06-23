@@ -7,5 +7,5 @@ public class Book
     public required string Author { get; set; }
     public required string ShortDescription { get; set; }
     public int PageCount { get; set; }
-    public DateOnly ReleaseDate { get; set; }
+    public DateOnly? ReleaseDate { get; set; }
 }

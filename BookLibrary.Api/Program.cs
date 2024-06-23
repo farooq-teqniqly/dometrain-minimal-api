@@ -1,6 +1,8 @@
 using BookLibrary.Data.Entities;
 using BookLibrary.Data.Extensions;
 using BookLibrary.Data.Repositories;
+using FluentValidation;
+using FluentValidation.Results;
 
 namespace BookLibrary.Api;
 
@@ -11,22 +13,38 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddRepositories();
+        builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
         AddSwaggerSupport(builder.Services);
 
         var app = builder.Build();
 
-        app.MapPost("books", async (Book book, IBookRepository bookRepository) =>
-        {
-            var added = await bookRepository.AddBook(book);
-
-            if (!added)
+        app.MapPost(
+            "books",
+            async (
+                Book book,
+                IBookRepository bookRepository,
+                IValidator<Book> validator) =>
             {
-                return Results.BadRequest($"A book with ISBN '{book.Isbn}' already exists.");
-            }
+                var validationResult = await validator.ValidateAsync(book);
 
-            return Results.Created($"/books/{book.Isbn}", book);
-        });
+                if (!validationResult.IsValid)
+                {
+                    return Results.BadRequest(validationResult.Errors);
+                }
+
+                var added = await bookRepository.AddBook(book);
+
+                if (!added)
+                {
+                    return Results.BadRequest(new List<ValidationFailure>
+                    {
+                        new("Isbn", $"A book with ISBN '{book.Isbn}' already exists.")
+                    });
+                }
+
+                return Results.Created($"/books/{book.Isbn}", book);
+            });
 
         UseSwagger(app, builder);
 
