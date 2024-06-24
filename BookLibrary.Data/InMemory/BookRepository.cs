@@ -13,28 +13,65 @@ internal class BookRepository : IBookRepository, IReadOnlyBookRepository
         return Task.FromResult(true);
     }
 
-    public Task<bool> UpdateBookAsync(Book book)
+    public async Task<bool> UpdateBookAsync(Book book)
     {
-        throw new NotImplementedException();
+        // Update is really a Delete/Add.
+        var bookToDelete = await GetByIsbnAsync(book.Isbn);
+
+        if (bookToDelete is null)
+        {
+            return false;
+        }
+
+        var bookToAdd = new Book
+        {
+            Author = book.Author,
+            Isbn = book.Isbn,
+            PageCount = book.PageCount,
+            ReleaseDate = book.ReleaseDate,
+            ShortDescription = book.ShortDescription,
+            Title = book.Title
+        };
+
+        _database.Remove(bookToDelete);
+        _database.Add(bookToAdd);
+
+        return true;
     }
 
-    public Task<bool> DeleteBookAsync(string isbn)
+    public async Task<bool> DeleteBookAsync(string isbn)
     {
-        throw new NotImplementedException();
+        var bookToDelete = await GetByIsbnAsync(isbn);
+
+        if (bookToDelete is null)
+        {
+            return false;
+        }
+
+        _database.Remove(bookToDelete);
+
+        return true;
     }
 
     public Task<Book?> GetByIsbnAsync(string isbn)
     {
-        throw new NotImplementedException();
+        return Task.FromResult(_database.SingleOrDefault(
+            book => string.Compare(
+                isbn,
+                book.Isbn,
+                StringComparison.InvariantCultureIgnoreCase) == 0));
     }
 
     public Task<IEnumerable<Book>> GetAllAsync()
     {
-        throw new NotImplementedException();
+        return Task.FromResult(_database.AsEnumerable());
     }
 
     public Task<IEnumerable<Book>> SearchByTitleAsync(string searchTerm)
     {
-        throw new NotImplementedException();
+        return Task.FromResult(_database.Where(book =>
+            book.Title.Contains(
+                searchTerm,
+                StringComparison.InvariantCultureIgnoreCase)));
     }
 }

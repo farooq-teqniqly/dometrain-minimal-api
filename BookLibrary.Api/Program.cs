@@ -3,6 +3,7 @@ using BookLibrary.Data.Extensions;
 using BookLibrary.Data.Repositories;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BookLibrary.Api;
 
@@ -45,6 +46,70 @@ public class Program
 
                 return Results.Created($"/books/{book.Isbn}", book);
             });
+
+        app.MapGet("books/{isbn}", async (string isbn, IReadOnlyBookRepository bookRepository) =>
+        {
+            var book = await bookRepository.GetByIsbnAsync(isbn);
+
+            if (book is null)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(book);
+        });
+
+        app.MapGet("books", async ([FromQuery(Name = "q")] string? searchTerm, IReadOnlyBookRepository bookRepository) =>
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var allBooks = await bookRepository.GetAllAsync();
+                return Results.Ok(allBooks);
+            }
+
+            var filteredBooks = await bookRepository.SearchByTitleAsync(searchTerm);
+
+            return Results.Ok(filteredBooks);
+        });
+
+        app.MapPut(
+            "books/{isbn}",
+            async (
+                string isbn,
+                Book book,
+                IBookRepository bookRepository,
+                IValidator<Book> validator) =>
+            {
+                book.Isbn = isbn;
+
+                var validationResult = await validator.ValidateAsync(book);
+
+                if (!validationResult.IsValid)
+                {
+                    return Results.BadRequest(validationResult.Errors);
+                }
+
+                var updated = await bookRepository.UpdateBookAsync(book);
+
+                if (!updated)
+                {
+                    return Results.NotFound();
+                }
+
+                return Results.Ok(book);
+            });
+
+        app.MapDelete("books", async (string isbn, IBookRepository bookRepository) =>
+        {
+            var deleted = await bookRepository.DeleteBookAsync(isbn);
+
+            if (deleted)
+            {
+                return Results.NoContent();
+            }
+
+            return Results.NotFound();
+        });
 
         UseSwagger(app, builder);
 
