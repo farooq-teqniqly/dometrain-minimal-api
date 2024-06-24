@@ -20,6 +20,8 @@ public class Program
 
         var app = builder.Build();
 
+        app.Services.SeedInMemoryDatabase();
+
         app.MapPost(
             "books",
             async (
@@ -133,4 +135,5 @@ public class Program
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
     }
+
 }
