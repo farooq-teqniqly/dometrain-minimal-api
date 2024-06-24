@@ -49,7 +49,12 @@ public class Program
                 return Results.Created($"/books/{book.Isbn}", book);
             });
 
-        app.MapGet("books/{isbn}", async (string isbn, IReadOnlyBookRepository bookRepository, IValidator<string> isbnValidator) =>
+        app.MapGet(
+            "books/{isbn}",
+            async (
+                string isbn,
+                IReadOnlyBookRepository bookRepository,
+                IValidator<string> isbnValidator) =>
         {
             var validationResult = await isbnValidator.ValidateAsync(isbn);
 
@@ -68,7 +73,11 @@ public class Program
             return Results.Ok(book);
         });
 
-        app.MapGet("books", async ([FromQuery(Name = "q")] string? searchTerm, IReadOnlyBookRepository bookRepository) =>
+        app.MapGet(
+            "books",
+            async (
+                [FromQuery(Name = "q")] string? searchTerm,
+                IReadOnlyBookRepository bookRepository) =>
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -108,7 +117,12 @@ public class Program
                 return Results.Ok(book);
             });
 
-        app.MapDelete("books", async (string isbn, IBookRepository bookRepository, IValidator<string> isbnValidator) =>
+        app.MapDelete(
+            "books",
+            async (
+                string isbn,
+                IBookRepository bookRepository,
+                IValidator<string> isbnValidator) =>
         {
             var validationResult = await isbnValidator.ValidateAsync(isbn);
 
