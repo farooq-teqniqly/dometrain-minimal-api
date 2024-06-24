@@ -63,8 +63,12 @@ public class Program
                     });
                 }
 
-                return Results.Created($"/books/{book.Isbn}", book);
-            });
+                return Results.CreatedAtRoute(
+                    RouteNames.GetBookByIsbn,
+                    new { isbn = book.Isbn },
+                    book);
+
+            }).WithName(RouteNames.AddBook);
 
         app.MapGet(
             "books/{isbn}",
@@ -88,7 +92,7 @@ public class Program
             }
 
             return Results.Ok(book);
-        });
+        }).WithName(RouteNames.GetBookByIsbn);
 
         app.MapGet(
             "books",
@@ -105,7 +109,7 @@ public class Program
             var filteredBooks = await bookRepository.SearchByTitleAsync(searchTerm);
 
             return Results.Ok(filteredBooks);
-        });
+        }).WithName(RouteNames.SearchBooksByTitle);
 
         app.MapPut(
             "books/{isbn}",
@@ -132,7 +136,7 @@ public class Program
                 }
 
                 return Results.Ok(book);
-            });
+            }).WithName(RouteNames.UpdateBook);
 
         app.MapDelete(
             "books",
@@ -156,7 +160,7 @@ public class Program
             }
 
             return Results.NotFound();
-        });
+        }).WithName(RouteNames.DeleteBook);
 
 
 
