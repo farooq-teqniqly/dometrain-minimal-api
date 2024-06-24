@@ -16,13 +16,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services
-            .AddAuthentication(ApiKeySchemeConstants.SchemeName)
-            .AddScheme<ApiKeyAuthSchemeOptions, ApiKeyAuthHandler>(
-                ApiKeySchemeConstants.SchemeName,
-                _ => { });
-
-        builder.Services.AddAuthorization();
+        AddApiKeyAuthentication(builder.Services);
 
         builder.Services.AddRepositories();
         builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -209,6 +203,17 @@ public class Program
                 }
             });
         });
+    }
+
+    private static void AddApiKeyAuthentication(IServiceCollection services)
+    {
+        services
+            .AddAuthentication(ApiKeySchemeConstants.SchemeName)
+            .AddScheme<ApiKeyAuthSchemeOptions, ApiKeyAuthHandler>(
+                ApiKeySchemeConstants.SchemeName,
+                _ => { });
+
+        services.AddAuthorization();
     }
 
 }
