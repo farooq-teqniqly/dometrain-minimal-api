@@ -6,17 +6,17 @@ internal class BookRepository : IBookRepository, IReadOnlyBookRepository
 {
     private static readonly List<Book> _database = [];
 
-    public Task<bool> AddBookAsync(Book book)
+    public Task<bool> AddBookAsync(Book book, CancellationToken ctx = default)
     {
         _database.Add(book);
 
         return Task.FromResult(true);
     }
 
-    public async Task<bool> UpdateBookAsync(Book book)
+    public async Task<bool> UpdateBookAsync(Book book, CancellationToken ctx = default)
     {
         // Update is really a Delete/Add.
-        var bookToDelete = await GetByIsbnAsync(book.Isbn);
+        var bookToDelete = await GetByIsbnAsync(book.Isbn, ctx);
 
         if (bookToDelete is null)
         {
@@ -39,9 +39,9 @@ internal class BookRepository : IBookRepository, IReadOnlyBookRepository
         return true;
     }
 
-    public async Task<bool> DeleteBookAsync(string isbn)
+    public async Task<bool> DeleteBookAsync(string isbn, CancellationToken ctx = default)
     {
-        var bookToDelete = await GetByIsbnAsync(isbn);
+        var bookToDelete = await GetByIsbnAsync(isbn, ctx);
 
         if (bookToDelete is null)
         {
@@ -53,7 +53,7 @@ internal class BookRepository : IBookRepository, IReadOnlyBookRepository
         return true;
     }
 
-    public Task<Book?> GetByIsbnAsync(string isbn)
+    public Task<Book?> GetByIsbnAsync(string isbn, CancellationToken ctx = default)
     {
         return Task.FromResult(_database.SingleOrDefault(
             book => string.Compare(
@@ -62,12 +62,12 @@ internal class BookRepository : IBookRepository, IReadOnlyBookRepository
                 StringComparison.InvariantCultureIgnoreCase) == 0));
     }
 
-    public Task<IEnumerable<Book>> GetAllAsync()
+    public Task<IEnumerable<Book>> GetAllAsync(CancellationToken ctx = default)
     {
         return Task.FromResult(_database.AsEnumerable());
     }
 
-    public Task<IEnumerable<Book>> SearchByTitleAsync(string searchTerm)
+    public Task<IEnumerable<Book>> SearchByTitleAsync(string searchTerm, CancellationToken ctx = default)
     {
         return Task.FromResult(_database.Where(book =>
             book.Title.Contains(
