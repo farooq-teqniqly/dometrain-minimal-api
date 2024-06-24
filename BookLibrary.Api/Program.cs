@@ -1,9 +1,12 @@
+using BookLibrary.Api.Auth;
 using BookLibrary.Data.Entities;
 using BookLibrary.Data.Extensions;
 using BookLibrary.Data.Repositories;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Models;
 
 namespace BookLibrary.Api;
 
@@ -12,6 +15,14 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services
+            .AddAuthentication(ApiKeySchemeConstants.SchemeName)
+            .AddScheme<ApiKeyAuthSchemeOptions, ApiKeyAuthHandler>(
+                ApiKeySchemeConstants.SchemeName,
+                _ => { });
+
+        builder.Services.AddAuthorization();
 
         builder.Services.AddRepositories();
         builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -22,12 +33,18 @@ public class Program
 
         app.Services.SeedInMemoryDatabase();
 
+        UseSwagger(app, builder);
+
+        app.UseAuthorization();
+
         app.MapPost(
             "books",
-            async (
+            [Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName, Roles = "Admin")]
+        async (
                 Book book,
                 IBookRepository bookRepository,
-                IValidator<Book> validator) =>
+                IValidator<Book> validator,
+                HttpContext httpContext) =>
             {
                 var validationResult = await validator.ValidateAsync(book);
 
@@ -141,7 +158,7 @@ public class Program
             return Results.NotFound();
         });
 
-        UseSwagger(app, builder);
+
 
         app.Run();
     }
@@ -161,7 +178,33 @@ public class Program
     private static void AddSwaggerSupport(IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+
+        services.AddSwaggerGen(c =>
+        {
+            c.AddSecurityDefinition(ApiKeySchemeConstants.SchemeName, new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.ApiKey,
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Description = "API Key Authentication",
+                Scheme = ApiKeySchemeConstants.SchemeName
+            });
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = ApiKeySchemeConstants.SchemeName
+                        }
+                    },
+                    new List<string>()
+                }
+            });
+        });
     }
 
 }
