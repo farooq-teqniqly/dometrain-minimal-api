@@ -6,11 +6,18 @@ internal class BookRepository : IBookRepository, IReadOnlyBookRepository
 {
     private static readonly List<Book> _database = [];
 
-    public Task<bool> AddBookAsync(Book book, CancellationToken ctx = default)
+    public async Task<bool> AddBookAsync(Book book, CancellationToken ctx = default)
     {
+        var existingBook = await GetByIsbnAsync(book.Isbn, ctx);
+
+        if (existingBook is not null)
+        {
+            return false;
+        }
+
         _database.Add(book);
 
-        return Task.FromResult(true);
+        return true;
     }
 
     public async Task<bool> UpdateBookAsync(Book book, CancellationToken ctx = default)
