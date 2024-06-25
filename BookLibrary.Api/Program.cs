@@ -1,3 +1,4 @@
+using System.Net;
 using BookLibrary.Api.Auth;
 using BookLibrary.Data.Entities;
 using BookLibrary.Data.Extensions;
@@ -32,37 +33,42 @@ public class Program
         app.UseAuthorization();
 
         app.MapPost(
-            "books",
-            [Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName, Roles = "Admin")]
+                "books",
+                [Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName, Roles = "Admin")]
         async (
-                Book book,
-                IBookRepository bookRepository,
-                IValidator<Book> validator,
-                HttpContext httpContext) =>
-            {
-                var validationResult = await validator.ValidateAsync(book);
-
-                if (!validationResult.IsValid)
+                    Book book,
+                    IBookRepository bookRepository,
+                    IValidator<Book> validator,
+                    HttpContext httpContext) =>
                 {
-                    return Results.BadRequest(validationResult.Errors);
-                }
+                    var validationResult = await validator.ValidateAsync(book);
 
-                var added = await bookRepository.AddBookAsync(book);
-
-                if (!added)
-                {
-                    return Results.BadRequest(new List<ValidationFailure>
+                    if (!validationResult.IsValid)
                     {
-                        new("Isbn", $"A book with ISBN '{book.Isbn}' already exists.")
-                    });
-                }
+                        return Results.BadRequest(validationResult.Errors);
+                    }
 
-                return Results.CreatedAtRoute(
-                    RouteNames.GetBookByIsbn,
-                    new { isbn = book.Isbn },
-                    book);
+                    var added = await bookRepository.AddBookAsync(book);
 
-            }).WithName(RouteNames.AddBook);
+                    if (!added)
+                    {
+                        return Results.BadRequest(new List<ValidationFailure>
+                        {
+                            new("Isbn", $"A book with ISBN '{book.Isbn}' already exists.")
+                        });
+                    }
+
+                    return Results.CreatedAtRoute(
+                        RouteNames.GetBookByIsbn,
+                        new { isbn = book.Isbn },
+                        book);
+
+                }).WithName(RouteNames.AddBook)
+            .Accepts<Book>("application/json")
+            .Produces((int)HttpStatusCode.Unauthorized)
+            .Produces<Book>((int)HttpStatusCode.Created)
+            .Produces<IEnumerable<ValidationFailure>>((int)HttpStatusCode.BadRequest)
+            .WithTags("Books");
 
         app.MapGet(
             "books/{isbn}",
@@ -86,28 +92,35 @@ public class Program
             }
 
             return Results.Ok(book);
-        }).WithName(RouteNames.GetBookByIsbn);
+        }).WithName(RouteNames.GetBookByIsbn)
+            .Produces<Book>()
+            .Produces((int)HttpStatusCode.NotFound)
+            .Produces<IEnumerable<ValidationFailure>>((int)HttpStatusCode.BadRequest)
+            .WithTags("Books");
 
         app.MapGet(
-            "books",
-            async (
-                [FromQuery(Name = "q")] string? searchTerm,
-                IReadOnlyBookRepository bookRepository) =>
-        {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                var allBooks = await bookRepository.GetAllAsync();
-                return Results.Ok(allBooks);
-            }
+                "books",
+                async (
+                    [FromQuery(Name = "q")] string? searchTerm,
+                    IReadOnlyBookRepository bookRepository) =>
+                {
+                    if (string.IsNullOrWhiteSpace(searchTerm))
+                    {
+                        var allBooks = await bookRepository.GetAllAsync();
+                        return Results.Ok(allBooks);
+                    }
 
-            var filteredBooks = await bookRepository.SearchByTitleAsync(searchTerm);
+                    var filteredBooks = await bookRepository.SearchByTitleAsync(searchTerm);
 
-            return Results.Ok(filteredBooks);
-        }).WithName(RouteNames.SearchBooksByTitle);
+                    return Results.Ok(filteredBooks);
+                }).WithName(RouteNames.SearchBooksByTitle)
+            .Produces<IEnumerable<Book>>()
+            .WithTags("Books");
 
         app.MapPut(
             "books/{isbn}",
-            async (
+            [Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName, Roles = "Admin")]
+        async (
                 string isbn,
                 Book book,
                 IBookRepository bookRepository,
@@ -130,11 +143,18 @@ public class Program
                 }
 
                 return Results.Ok(book);
-            }).WithName(RouteNames.UpdateBook);
+            }).WithName(RouteNames.UpdateBook)
+            .Accepts<Book>("application/json")
+            .Produces((int)HttpStatusCode.Unauthorized)
+            .Produces<Book>()
+            .Produces<IEnumerable<ValidationFailure>>((int)HttpStatusCode.BadRequest)
+            .WithTags("Books");
 
         app.MapDelete(
             "books",
-            async (
+            [Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName, Roles = "Admin")]
+
+        async (
                 string isbn,
                 IBookRepository bookRepository,
                 IValidator<string> isbnValidator) =>
@@ -154,9 +174,11 @@ public class Program
             }
 
             return Results.NotFound();
-        }).WithName(RouteNames.DeleteBook);
-
-
+        }).WithName(RouteNames.DeleteBook)
+            .Produces((int)HttpStatusCode.Unauthorized)
+            .Produces<Book>((int)HttpStatusCode.NoContent)
+            .Produces<IEnumerable<ValidationFailure>>((int)HttpStatusCode.BadRequest)
+            .WithTags("Books");
 
         app.Run();
     }
