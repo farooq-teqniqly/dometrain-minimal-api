@@ -33,7 +33,7 @@ public class Program
         app.UseAuthorization();
 
         app.MapPost(
-                "books",
+                "v1/books",
                 [Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName, Roles = "Admin")]
         async (
                     Book book,
@@ -71,7 +71,7 @@ public class Program
             .WithTags("Books");
 
         app.MapGet(
-            "books/{isbn}",
+            "v1/books/{isbn}",
             async (
                 string isbn,
                 IReadOnlyBookRepository bookRepository,
@@ -99,7 +99,7 @@ public class Program
             .WithTags("Books");
 
         app.MapGet(
-                "books",
+                "v1/books",
                 async (
                     [FromQuery(Name = "q")] string? searchTerm,
                     IReadOnlyBookRepository bookRepository) =>
@@ -118,7 +118,7 @@ public class Program
             .WithTags("Books");
 
         app.MapPut(
-            "books/{isbn}",
+            "v1/books/{isbn}",
             [Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName, Roles = "Admin")]
         async (
                 string isbn,
@@ -151,7 +151,7 @@ public class Program
             .WithTags("Books");
 
         app.MapDelete(
-            "books",
+            "v1/books",
             [Authorize(AuthenticationSchemes = ApiKeySchemeConstants.SchemeName, Roles = "Admin")]
 
         async (
@@ -201,6 +201,8 @@ public class Program
 
         services.AddSwaggerGen(c =>
         {
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Book Library API", Version = "v1" });
+
             c.AddSecurityDefinition(ApiKeySchemeConstants.SchemeName, new OpenApiSecurityScheme
             {
                 Type = SecuritySchemeType.ApiKey,
