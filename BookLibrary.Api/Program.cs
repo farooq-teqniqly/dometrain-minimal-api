@@ -1,5 +1,6 @@
 using System.Net;
 using BookLibrary.Api.Auth;
+using BookLibrary.Api.Extensions;
 using BookLibrary.Data.Entities;
 using BookLibrary.Data.Extensions;
 using BookLibrary.Data.Repositories;
@@ -179,6 +180,17 @@ public class Program
             .Produces<Book>((int)HttpStatusCode.NoContent)
             .Produces<IEnumerable<ValidationFailure>>((int)HttpStatusCode.BadRequest)
             .WithTags("Books");
+
+        app.MapGet("v1/ping", () => Results.Extensions.Html($@"<!doctype html>
+            <html>
+                <head>
+                    <title>Book Library API Status Page</title>
+                </head>
+                <body>
+                    <h2>The API is alive.</h2>
+                    <p>{DateTime.Now}</p>
+                </body>
+            </html>"));
 
         app.Run();
     }
