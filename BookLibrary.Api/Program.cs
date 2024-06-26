@@ -65,39 +65,39 @@ public class Program
                         book);
 
                 }).WithName(RouteNames.AddBook)
-            .Accepts<Book>("application/json")
-            .Produces((int)HttpStatusCode.Unauthorized)
-            .Produces<Book>((int)HttpStatusCode.Created)
-            .Produces<IEnumerable<ValidationFailure>>((int)HttpStatusCode.BadRequest)
-            .WithTags("Books");
+            .AcceptsJson<Book>()
+            .ProducesUnauthorizedResponse()
+            .ProducesCreatedResponse<Book>()
+            .ProducesBadRequestResponse()
+            .WithDefaultTags();
 
         app.MapGet(
-            "v1/books/{isbn}",
-            async (
-                string isbn,
-                IReadOnlyBookRepository bookRepository,
-                IValidator<string> isbnValidator) =>
-        {
-            var validationResult = await isbnValidator.ValidateAsync(isbn);
+                "v1/books/{isbn}",
+                async (
+                    string isbn,
+                    IReadOnlyBookRepository bookRepository,
+                    IValidator<string> isbnValidator) =>
+                {
+                    var validationResult = await isbnValidator.ValidateAsync(isbn);
 
-            if (!validationResult.IsValid)
-            {
-                return Results.BadRequest(validationResult.Errors);
-            }
+                    if (!validationResult.IsValid)
+                    {
+                        return Results.BadRequest(validationResult.Errors);
+                    }
 
-            var book = await bookRepository.GetByIsbnAsync(isbn);
+                    var book = await bookRepository.GetByIsbnAsync(isbn);
 
-            if (book is null)
-            {
-                return Results.NotFound();
-            }
+                    if (book is null)
+                    {
+                        return Results.NotFound();
+                    }
 
-            return Results.Ok(book);
-        }).WithName(RouteNames.GetBookByIsbn)
-            .Produces<Book>()
-            .Produces((int)HttpStatusCode.NotFound)
-            .Produces<IEnumerable<ValidationFailure>>((int)HttpStatusCode.BadRequest)
-            .WithTags("Books");
+                    return Results.Ok(book);
+                }).WithName(RouteNames.GetBookByIsbn)
+            .ProducesOkResponse<Book>()
+            .ProducesNotFoundResponse()
+            .ProducesBadRequestResponse()
+            .WithDefaultTags();
 
         app.MapGet(
                 "v1/books",
@@ -115,8 +115,8 @@ public class Program
 
                     return Results.Ok(filteredBooks);
                 }).WithName(RouteNames.SearchBooksByTitle)
-            .Produces<IEnumerable<Book>>()
-            .WithTags("Books");
+            .ProducesOkResponse<IEnumerable<Book>>()
+            .WithDefaultTags();
 
         app.MapPut(
             "v1/books/{isbn}",
@@ -145,11 +145,11 @@ public class Program
 
                 return Results.Ok(book);
             }).WithName(RouteNames.UpdateBook)
-            .Accepts<Book>("application/json")
-            .Produces((int)HttpStatusCode.Unauthorized)
-            .Produces<Book>()
-            .Produces<IEnumerable<ValidationFailure>>((int)HttpStatusCode.BadRequest)
-            .WithTags("Books");
+            .AcceptsJson<Book>()
+            .ProducesUnauthorizedResponse()
+            .ProducesOkResponse<Book>()
+            .ProducesBadRequestResponse()
+            .WithDefaultTags();
 
         app.MapDelete(
             "v1/books",
@@ -176,10 +176,10 @@ public class Program
 
             return Results.NotFound();
         }).WithName(RouteNames.DeleteBook)
-            .Produces((int)HttpStatusCode.Unauthorized)
-            .Produces<Book>((int)HttpStatusCode.NoContent)
-            .Produces<IEnumerable<ValidationFailure>>((int)HttpStatusCode.BadRequest)
-            .WithTags("Books");
+            .ProducesUnauthorizedResponse()
+            .ProducesNoContentResponse()
+            .ProducesBadRequestResponse()
+            .WithDefaultTags();
 
         app.MapGet("v1/ping", () => Results.Extensions.Html($@"<!doctype html>
             <html>
